@@ -3,25 +3,43 @@ import { defineStore } from "pinia";
 
 export const useSearchStore = defineStore('search', {
     state: (): SearchState => ({
-        pokemon: null,
-        results: {
-            list: []
-        }
+        basicList: [],
+        advList: [],
     }),
     actions: {
         async getAllPokemon() {
-            const response = await axios.get("https://pokeapi.co/api/v2/pokemon/?limit=50")
-            this.results.list = response.data.results
-            console.log(">>> getALlPokemon:", response.data.results, this.results.list)
-        }
+            await axios.get("https://pokeapi.co/api/v2/pokemon/?limit=151")
+            .then(response => {
+                this.basicList = response.data.results
+                let promises = this.basicList.map(result => {
+                    return axios.get(result.url)
+                })
+                Promise.all(promises).then(response => {
+                    this.advList = response
+                })
+            })
+            // this.list.forEach(pokemon => {
+            //     this.results[pokemon?.name] = this.fetchPokemonData(pokemon)
+            // })
+            console.log(">>> getAllPokemon:", this.basicList, this.advList)
+        },
     }
 })
 
 type SearchState = {
-    pokemon: PokemonResource | null,
-    results: {
-        list: Array<PokemonResource>,
-    }
+    basicList: Array<PokemonListResource>,
+    advList: Array<PokemonResource>,
 }
 
-export type PokemonResource = {}
+export type PokemonListResource = {
+    name: string,
+    url: string
+}
+
+export type PokemonResource = {
+    name: string
+    url: string
+    sprites: {
+        front_default: string
+    }
+}
