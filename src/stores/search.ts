@@ -12,7 +12,6 @@ export const useSearchStore = defineStore('search', {
             .then(response => {
                 this.basicList = response.data.results
             })
-            console.log(">>> getAllPokemon:", this.basicList, this.advList)
         },
 
         async getPokeData(filtered: Array<PokemonListResource>) {
