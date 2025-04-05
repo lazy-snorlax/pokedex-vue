@@ -8,21 +8,21 @@ export const useSearchStore = defineStore('search', {
     }),
     actions: {
         async getAllPokemon() {
-            await axios.get("https://pokeapi.co/api/v2/pokemon/?limit=151")
+            await axios.get("https://pokeapi.co/api/v2/pokemon/?limit=10500")
             .then(response => {
                 this.basicList = response.data.results
-                let promises = this.basicList.map(result => {
-                    return axios.get(result.url)
-                })
-                Promise.all(promises).then(response => {
-                    this.advList = response
-                })
             })
-            // this.list.forEach(pokemon => {
-            //     this.results[pokemon?.name] = this.fetchPokemonData(pokemon)
-            // })
             console.log(">>> getAllPokemon:", this.basicList, this.advList)
         },
+
+        async getPokeData(filtered: Array<PokemonListResource>) {
+            let promises = filtered.map(result => {
+                return axios.get(result.url)
+            })
+            Promise.all(promises).then(response => {
+                this.advList = response
+            })
+        }
     }
 })
 
