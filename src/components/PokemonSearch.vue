@@ -9,8 +9,24 @@
 
 <script setup lang="ts">
 
+import { storeToRefs } from 'pinia'
+import { useSearchStore } from '../stores/search'
+
+const { basicList } = storeToRefs(useSearchStore())
+
 const handleChange = (e: Event) => {
-    console.log(">>> Changed: ", e.target?.value)
+    let searchStr = e.target?.value
+
+    if (searchStr.length >= 3) {
+        let filtered = basicList.value.filter((pokemon) => {
+            return pokemon.name.includes(searchStr)
+        })
+        emit('filteredList', filtered)
+    }
 }
+
+const emit = defineEmits<{
+    (e: 'filteredList', filteredList: Array<Object>) : void
+}>()
 
 </script>
