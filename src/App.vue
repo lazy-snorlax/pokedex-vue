@@ -12,8 +12,7 @@
       </div>
     </div>
   </div>
-  <div class="divider"></div>
-  <div class="container mx-auto max-h-full">
+  <div class="container mx-auto max-h-full mt-4">
     <PokemonResults :list="pokeList" v-if="pokeList.length > 0" :key="pokeList.length * Math.floor(Math.random()*10)" />
   </div>
 </template>
