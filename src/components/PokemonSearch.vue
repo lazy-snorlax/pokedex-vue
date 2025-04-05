@@ -10,7 +10,7 @@
 <script setup lang="ts">
 
 import { storeToRefs } from 'pinia'
-import { useSearchStore } from '../stores/search'
+import { useSearchStore, type PokemonListResource } from '../stores/search'
 
 const { basicList } = storeToRefs(useSearchStore())
 
@@ -26,7 +26,7 @@ const handleChange = (e: Event) => {
 }
 
 const emit = defineEmits<{
-    (e: 'filteredList', filteredList: Array<Object>) : void
+    (e: 'filteredList', filteredList: Array<PokemonListResource>) : void
 }>()
 
 </script>

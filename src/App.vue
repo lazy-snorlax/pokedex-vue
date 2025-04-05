@@ -21,11 +21,11 @@
 import PokemonResults from './components/PokemonResults.vue';
 import PokemonSearch from './components/PokemonSearch.vue';
 
-import { useSearchStore } from './stores/search';
+import { useSearchStore, type PokemonListResource } from './stores/search';
 import { onMounted, ref } from 'vue';
 const { getAllPokemon } = useSearchStore()
 
-const pokeList = ref([])
+const pokeList = ref<PokemonListResource[]>([])
 
 onMounted(() => {
   getPokemon()
@@ -35,7 +35,7 @@ const getPokemon = async () => {
   await getAllPokemon()
 }
 
-const filterResults = (filtered: Array<Object>) => {
+const filterResults = (filtered: Array<PokemonListResource>) => {
   pokeList.value = filtered
 }
 

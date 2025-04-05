@@ -38,7 +38,10 @@ export type PokemonListResource = {
 export type PokemonResource = {
     name: string
     url: string
-    sprites: {
-        front_default: string
+    data: {
+        name: string | undefined
+        sprites: {
+            front_default: string
+        }
     }
 }
