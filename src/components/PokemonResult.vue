@@ -1,7 +1,7 @@
 <template>
     <div class="card bg-base-300 rounded-box grid grow place-items-center">
-        <h1>{{ capitalized(pokemon?.data.name) }}</h1>
-        <img :src=" pokemon.data.sprites.other['official-artwork'].front_default" />
+        <h1>{{ capitalized(pokemon?.name) }}</h1>
+        <img :src=" pokemon?.sprites.other['official-artwork'].front_default" />
     </div>
 </template>
 
