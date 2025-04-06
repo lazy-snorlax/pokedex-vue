@@ -5,6 +5,7 @@ export const useSearchStore = defineStore('search', {
     state: (): SearchState => ({
         basicList: [],
         advList: [],
+        cache: {}
     }),
     actions: {
         async getAllPokemon() {
@@ -15,12 +16,31 @@ export const useSearchStore = defineStore('search', {
         },
 
         async getPokeData(filtered: Array<PokemonListResource>) {
-            let promises = filtered.map(result => {
-                return axios.get(result.url)
+            this.advList = []; // Reset advList to blank
+            let promises = [];
+            
+            filtered.forEach(result => {
+                // Only pull pokemon not in cache
+                if (this.cache[result.name] === undefined) {
+                    promises.push(axios.get(result.url))
+                } else {
+                    this.advList.push(this.cache[result.name])
+                }
             })
-            Promise.all(promises).then(response => {
-                this.advList = response
-            })
+            console.log(">>> promises: ", promises, promises.length)
+            // Pull only pokemon not already in cache
+            if (promises.length > 0) {
+                Promise.all(promises).then(response => {
+                    let respArr = response
+                    // Add to advList & cache
+                    respArr.forEach(resp => {
+                        console.log(">>> resp: ", resp?.data.name)
+                        this.cache[resp?.data.name] = resp?.data
+                        this.advList.push(this.cache[resp?.data.name])
+                    })
+                    console.log(">>> Cache: ", this.cache)
+                })
+            }
         }
     }
 })
@@ -28,6 +48,9 @@ export const useSearchStore = defineStore('search', {
 type SearchState = {
     basicList: Array<PokemonListResource>,
     advList: Array<PokemonResource>,
+    cache: {
+        [key: string]: PokemonResource
+    },
 }
 
 export type PokemonListResource = {
@@ -36,12 +59,14 @@ export type PokemonListResource = {
 }
 
 export type PokemonResource = {
-    name: string
+    name: string | undefined
     url: string
-    data: {
-        name: string | undefined
-        sprites: {
-            front_default: string
+    sprites: {
+        front_default: string
+        other: {
+            [key: string]: {
+                front_default: string
+            }
         }
     }
 }
