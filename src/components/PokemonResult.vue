@@ -1,7 +1,8 @@
 <template>
-    <div class="card bg-base-300 rounded-box grid grow place-items-center">
+    <div class="card bg-base-300 rounded-box grid grow place-items-center pb-3">
         <h1>{{ capitalized(pokemon?.name) }}</h1>
         <img :src=" pokemon?.sprites.other['official-artwork'].front_default" />
+        <RouterLink :to="{ name: 'pokemon', params: { pokemon: pokemon?.name } }" class="btn btn-primary">Open</RouterLink>
     </div>
 </template>
 

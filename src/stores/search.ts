@@ -5,7 +5,15 @@ export const useSearchStore = defineStore('search', {
     state: (): SearchState => ({
         basicList: [],
         advList: [],
-        cache: {}
+        cache: {},
+        pokemon: {
+            name: "",
+            url: "",
+            sprites: {
+                front_default: "",
+                other: {}
+            }
+        }
     }),
     actions: {
         async getAllPokemon() {
@@ -17,7 +25,7 @@ export const useSearchStore = defineStore('search', {
 
         async getPokeData(filtered: Array<PokemonListResource>) {
             this.advList = []; // Reset advList to blank
-            let promises = [];
+            let promises = []; // Init empty promise array
             
             filtered.forEach(result => {
                 // Only pull pokemon not in cache
@@ -27,7 +35,6 @@ export const useSearchStore = defineStore('search', {
                     this.advList.push(this.cache[result.name])
                 }
             })
-            console.log(">>> promises: ", promises, promises.length)
             // Pull only pokemon not already in cache
             if (promises.length > 0) {
                 Promise.all(promises).then(response => {
@@ -41,6 +48,16 @@ export const useSearchStore = defineStore('search', {
                     console.log(">>> Cache: ", this.cache)
                 })
             }
+        },
+
+        async getPokemon(name: string) {
+            if (this.cache[name] !== undefined) {
+                this.pokemon = this.cache[name]
+            } else {
+                const response = await axios.get("https://pokeapi.co/api/v2/pokemon/"+name)
+                this.pokemon = response.data
+                this.cache[name] = response.data
+            }
         }
     }
 })
@@ -51,6 +68,7 @@ type SearchState = {
     cache: {
         [key: string]: PokemonResource
     },
+    pokemon: PokemonResource
 }
 
 export type PokemonListResource = {
@@ -59,8 +77,65 @@ export type PokemonListResource = {
 }
 
 export type PokemonResource = {
-    name: string | undefined
+    name: string
     url: string
+    height: number
+    weight: number
+    base_experience: number
+    types: Array<{
+        slot: number
+        type: {
+            name: string
+            url: string
+        }
+    }>
+    held_items: Array<{
+        item: {
+            name: string
+            url: string
+        }
+        version_details: Array<{
+            rarity: number
+            version: {
+                name: string
+                url: string
+            }
+        }>
+        location_area_encounters: string
+    }>
+    abilities: Array<{
+        ability: {
+            name: string
+            url: string
+        }
+        is_hidden: boolean
+        slot: number
+    }>
+    moves: Array<{
+        move: {
+            name: string
+            url: string
+        }
+        version_group_details: Array<{
+            level_learned_at: number
+            version_group: {
+                name: string
+                url: string
+            }
+            move_learn_method: {
+                name: string
+                url: string
+            }
+        }>
+    }>
+    species: {
+        name: string
+        url: string
+    }
+    forms: Array<{
+        name: string
+        url: string
+    }>
     sprites: {
         front_default: string
         other: {
@@ -69,4 +144,12 @@ export type PokemonResource = {
             }
         }
     }
+    stats: Array<{
+        base_stat: number
+        effort: number
+        stat: {
+            name: string
+            url: string
+        }
+    }>
 }
