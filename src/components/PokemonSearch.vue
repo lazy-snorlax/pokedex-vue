@@ -15,7 +15,7 @@ import { useSearchStore, type PokemonListResource } from '../stores/search'
 const { basicList } = storeToRefs(useSearchStore())
 
 const handleChange = (e: Event) => {
-    let searchStr = e.target?.value
+    let searchStr = e.target?.value.toLowerCase()
 
     if (searchStr.length >= 3) {
         let filtered = basicList.value.filter((pokemon) => {
