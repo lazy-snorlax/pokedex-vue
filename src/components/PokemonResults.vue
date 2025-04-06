@@ -25,7 +25,7 @@ onMounted(() => {
     getPokemon(props.list)
 })
 
-const getPokemon = async (list) => {
+const getPokemon = async (list: Array<PokemonListResource>) => {
     await getPokeData(list)
 }
 
