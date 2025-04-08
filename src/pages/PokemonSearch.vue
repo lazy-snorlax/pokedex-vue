@@ -4,7 +4,7 @@
         <div class="max-w-full">
           <h1 class="text-5xl font-bold">Pokedex Search</h1>
           <p class="py-6">
-            Type at least 3 characters to begin a search
+            Type at least 3 letters to begin a search
           </p>
           <div class="rounded-box grid h-20 place-items-center">
             <PokemonSearch @filtered-list="filterResults" />
