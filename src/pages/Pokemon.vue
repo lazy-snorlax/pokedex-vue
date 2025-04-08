@@ -49,24 +49,23 @@
         <div class="card bg-base-300 rounded-box grid grow place-items-center mb-3 pt-3">
             <h1 class="card-title">Sprites</h1>
             <div class="card-body">
-                <div class="flex gap-8">
+                <div class="flex gap-2 justify-center">
                     <img :src="pokemon.sprites.front_default" alt="" class="w-30">
                     <img :src="pokemon.sprites.back_default" alt="" class="w-30">
                     <img :src="pokemon.sprites.front_shiny" alt="" class="w-30">
                     <img :src="pokemon.sprites.back_shiny" alt="" class="w-30">
                 </div>
-                <div class="flex gap-8">
+                <div class="flex gap-8 justify-center">
                     <img :src="pokemon.sprites.other.showdown?.front_default" alt="" class="w-30">
-                    <img :src="pokemon.sprites.other.showdown?.back_default" alt="" class="w-30">
+                    <img v-if="pokemon.sprites.other.showdown?.back_default" :src="pokemon.sprites.other.showdown?.back_default" alt="" class="w-30">
                     <img :src="pokemon.sprites.other.showdown?.front_shiny" alt="" class="w-30">
-                    <img :src="pokemon.sprites.other.showdown?.back_shiny" alt="" class="w-30">
+                    <img v-if="pokemon.sprites.other.showdown?.back_shiny" :src="pokemon.sprites.other.showdown?.back_shiny" alt="" class="w-30">
                 </div>
             </div>
         </div>
-        <div v-if="pokemon.held_items.length > 0" class="card bg-base-300 rounded-box grid grow place-items-center mb-3 pt-3">
+        <div v-if="pokemon.held_items?.length > 0" class="card bg-base-300 rounded-box grid grow place-items-center mb-3 pt-3">
             <h1 class="card-title">Held Items</h1>
             <div class="card-body">
-                <template v-for="item in pokemon.held_items"></template>
                 <table class="table">
                     <thead>
                         <tr>
@@ -80,10 +79,8 @@
                             <td>{{ sanitize(item.item.name) }}</td>
                             <td>
                                 <template v-for="(version, idx) in item.version_details">
-                                    <p>
-                                        <span>{{ version.rarity }}</span>
-                                        <span class="ms-3 badge">{{ sanitize(version.version.name) }}</span>
-                                    </p>
+                                    <span>{{ version.rarity }}</span>
+                                    <span class="ms-1 me-4 badge">{{ sanitize(version.version.name) }}</span>
                                 </template>
                             </td>
                             <td></td>
