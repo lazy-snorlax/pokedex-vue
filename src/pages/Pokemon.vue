@@ -92,26 +92,36 @@
         <div class="card bg-base-300 rounded-box grid grow place-items-center mb-3 pt-3">
             <h1 class="card-title">Moves</h1>
             <div class="card-body">
-                <div class="tabs tabs-border">
-                    <template v-for="(moveGroup, versionGroupName) in groupedMoves">
+                <div role="tablist" class="tabs tabs-lift text-center">
+                    
+                    <template v-for="(methodGroups, versionGroupName) in groupedMoves">
                         <input type="radio" name="move_version_tabs" class="tab" :aria-label="sanitize(versionGroupName)" :checked="`${versionGroupName ? 'checked' : ''}`">
                         <div class="tab-content">
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th>Move</th>
-                                        <th>Learn Method</th>
-                                        <th>Learned At</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr v-for="(move, index) in moveGroup" :key="index">
-                                        <td>{{ sanitize(move.move) }}</td>
-                                        <td>{{ sanitize(move.move_learn_method) }}</td>
-                                        <td><span v-if="move.move_learn_method == 'level-up'">{{ move.level_learned_at }}</span></td>
-                                    </tr>
-                                </tbody>
-                            </table>
+
+                            <div role="tablist" class="inner-tabs tabs tabs-lift">
+                                <template v-for="(moves, methodName) in methodGroups">
+                                    <input type="radio" :name="`move_learn_method_tabs_${ versionGroupName }`" class="tab" :aria-label="sanitize(methodName)" :checked="methodName === 'level-up' ?? 'checked'">
+                                    <div class="tab-content">
+                                        <table class="table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Move</th>
+                                                    <th>Learned At</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr v-for="(move, index) in moves" :key="index">
+                                                    <td>{{ sanitize(move.move) }}</td>
+                                                    <td>
+                                                        {{ move.level_learned_at > 0 ? move.level_learned_at : '' }}
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </template>
+                            </div>
+
                         </div>
                     </template>
                 </div>
@@ -144,33 +154,63 @@ const capitalized = (name: string) => {
     }
 }
 const sanitize = (name: string) => {
+    if (name == undefined) {
+        return ''
+    }
     let words = name.split("-")
     let newWord = ""
     words.forEach(word => {
         newWord += word.charAt(0).toUpperCase() + word.slice(1) + " "
     });
-    return newWord
+    return newWord.trim()
 }
 
+const learnTypes = ['tutor', 'level-up', 'machine'];
+
 const groupedMoves = computed(() => {
-    return pokemon?.value.moves?.reduce((group, currentMove) => {
-        // Iterate over each version group for the current move
+    let grouped = pokemon?.value.moves?.reduce((group, currentMove) => {
         currentMove.version_group_details.forEach(detail => {
             const versionGroupName = detail.version_group.name;
+            const methodName = detail.move_learn_method.name;
+
+            // Initialize version group if it doesn't exist
             if (!group[versionGroupName]) {
-                // Create an empty array for the version group if it doesn't exist
-                group[versionGroupName] = []; 
+                group[versionGroupName] = {};
             }
-            // Add the move to the appropriate version group
-            group[versionGroupName].push({
+
+            // Initialize method group inside the version group if it doesn't exist
+            if (!group[versionGroupName][methodName]) {
+                group[versionGroupName][methodName] = [];
+            }
+
+            // Add the move with details
+            group[versionGroupName][methodName].push({
                 move: currentMove.move.name,
                 url: currentMove.move.url,
                 level_learned_at: detail.level_learned_at,
-                move_learn_method: detail.move_learn_method.name,
             });
         });
     
         return group;
     }, {})
+
+    // Sort moves in each method group by level_learned_at
+    for (const version in grouped) {
+        for (const method in grouped[version]) {
+            if (method === 'level-up') {
+                // Sort by level
+                grouped[version][method].sort(
+                    (a, b) => a.level_learned_at - b.level_learned_at
+                );
+            } else if (method === 'machine' || method === 'tutor') {
+                // Sort alphabetically by move name
+                grouped[version][method].sort((a, b) =>
+                    a.move.localeCompare(b.move)
+                );
+            }
+        }
+    }
+    console.log(">>>> grouped moves: ", grouped)
+    return grouped;
 })
 </script>
