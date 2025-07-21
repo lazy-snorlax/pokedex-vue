@@ -36,6 +36,7 @@
     </div>
 
     <div class="grid grid-cols-1 gap-8 xl:grid-cols-1 lg:grid-cols-1 md:grid-cols-1 mx-5 mb-5">
+        <!-- Abilities -->
         <div class="card bg-base-300 rounded-box grid grow place-items-center mb-3 pt-3">
             <h1 class="card-title">Abilities</h1>
             <div class="card-body">
@@ -46,6 +47,8 @@
                 </template>
             </div>
         </div>
+
+        <!-- Sprites -->
         <div class="card bg-base-300 rounded-box grid grow place-items-center mb-3 pt-3">
             <h1 class="card-title">Sprites</h1>
             <div class="card-body">
@@ -63,6 +66,8 @@
                 </div>
             </div>
         </div>
+
+        <!-- Items -->
         <div v-if="pokemon.held_items?.length > 0" class="card bg-base-300 rounded-box grid grow place-items-center mb-3 pt-3">
             <h1 class="card-title">Held Items</h1>
             <div class="card-body">
@@ -89,6 +94,8 @@
                 </table>
             </div>
         </div>
+
+        <!-- Moves -->
         <div class="card bg-base-300 rounded-box grid grow place-items-center mb-3 pt-3">
             <h1 class="card-title">Moves</h1>
             <div class="card-body">
@@ -99,6 +106,7 @@
                         <div class="tab-content">
 
                             <div role="tablist" class="inner-tabs tabs tabs-lift">
+                                <span class="tab w-[calc((100vw-200px)/2)]">&nbsp;</span>
                                 <template v-for="(moves, methodName) in methodGroups">
                                     <input type="radio" :name="`move_learn_method_tabs_${ versionGroupName }`" class="tab" :aria-label="sanitize(methodName)" :checked="methodName === 'level-up' ?? 'checked'">
                                     <div class="tab-content">
@@ -113,7 +121,7 @@
                                                 <tr v-for="(move, index) in moves" :key="index">
                                                     <td>{{ sanitize(move.move) }}</td>
                                                     <td>
-                                                        {{ move.level_learned_at > 0 ? move.level_learned_at : '' }}
+                                                        {{ methodName === 'level-up' ? move.level_learned_at : '' }}
                                                     </td>
                                                 </tr>
                                             </tbody>
@@ -165,9 +173,9 @@ const sanitize = (name: string) => {
     return newWord.trim()
 }
 
-const learnTypes = ['tutor', 'level-up', 'machine'];
-
 const groupedMoves = computed(() => {
+    const methodOrder = ['level-up', 'machine', 'tutor' ];
+
     let grouped = pokemon?.value.moves?.reduce((group, currentMove) => {
         currentMove.version_group_details.forEach(detail => {
             const versionGroupName = detail.version_group.name;
@@ -196,21 +204,25 @@ const groupedMoves = computed(() => {
 
     // Sort moves in each method group by level_learned_at
     for (const version in grouped) {
-        for (const method in grouped[version]) {
-            if (method === 'level-up') {
-                // Sort by level
-                grouped[version][method].sort(
-                    (a, b) => a.level_learned_at - b.level_learned_at
-                );
-            } else if (method === 'machine' || method === 'tutor') {
-                // Sort alphabetically by move name
-                grouped[version][method].sort((a, b) =>
-                    a.move.localeCompare(b.move)
-                );
+        const orderedMethods = {};
+
+        methodOrder.forEach(method => {
+            if (grouped[version][method]) {
+                if (method === 'level-up') {
+                    grouped[version][method].sort(
+                        (a, b) => a.level_learned_at - b.level_learned_at
+                    );
+                } else {
+                    grouped[version][method].sort((a, b) =>
+                        a.move.localeCompare(b.move)
+                    );
+                }
+                orderedMethods[method] = grouped[version][method];
             }
-        }
+        });
+        grouped[version] = orderedMethods;
     }
-    console.log(">>>> grouped moves: ", grouped)
+    console.log(">>>> grouped moves (ordered): ", grouped)
     return grouped;
 })
 </script>
