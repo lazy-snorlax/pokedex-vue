@@ -53,10 +53,10 @@
             <h1 class="card-title">Sprites</h1>
             <div class="card-body">
                 <div class="flex gap-2 justify-center">
-                    <img :src="pokemon.sprites.front_default" alt="" class="w-30">
-                    <img :src="pokemon.sprites.back_default" alt="" class="w-30">
-                    <img :src="pokemon.sprites.front_shiny" alt="" class="w-30">
-                    <img :src="pokemon.sprites.back_shiny" alt="" class="w-30">
+                    <img v-if="pokemon.sprites.front_default" :src="pokemon.sprites.front_default" alt="" class="w-30">
+                    <img v-if="pokemon.sprites.back_default" :src="pokemon.sprites.back_default" alt="" class="w-30">
+                    <img v-if="pokemon.sprites.front_shiny" :src="pokemon.sprites.front_shiny" alt="" class="w-30">
+                    <img v-if="pokemon.sprites.back_shiny" :src="pokemon.sprites.back_shiny" alt="" class="w-30">
                 </div>
                 <div class="flex gap-8 justify-center">
                     <img :src="pokemon.sprites.other.showdown?.front_default" alt="" class="w-30">
