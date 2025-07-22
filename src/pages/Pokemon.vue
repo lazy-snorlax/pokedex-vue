@@ -126,15 +126,15 @@
                                             <tbody>
                                                 <tr v-for="(move, index) in moves" :key="index">
                                                     <td>{{ sanitize(move.move) }}</td>
-                                                    <td>{{ sanitize(move.type?.name) }}</td>
+                                                    <td :class="move.type?.name" class="text-center">{{ sanitize(move.type?.name) }}</td>
                                                     <td>{{ move.power ?? '-' }}</td>
                                                     <td>{{ move.accuracy ?? '-' }}</td>
-                                                    <td>{{ sanitize(move.damage_class) }}</td>
+                                                    <td :class="move.damage_class != 'status' ? move.damage_class : 'status-type'">{{ sanitize(move.damage_class) }}</td>
                                                     <td>
                                                         {{ methodName === 'level-up' ? move.level_learned_at : '' }}
                                                     </td>
                                                     <td>{{ move.flavor_text ?? '-' }}</td>
-                                                    <td>{{ move.effect ?? '-' }}</td>
+                                                    <td class="overflow-x-auto">{{ move.effect ?? '-' }}</td>
                                                 </tr>
                                             </tbody>
                                         </table>
@@ -246,3 +246,40 @@ const groupedMoves = computed(() => {
     return grouped;
 })
 </script>
+
+<style scoped>
+.physical {
+    background: radial-gradient(yellow, yellow, red, red);
+    color: black;
+    text-align: center;
+}
+.special {
+    background: radial-gradient(indigo,indigo, navy);
+    text-align: center;
+}
+.status-type {
+    background: radial-gradient(grey, grey, white);
+    text-align: center;
+}
+
+.fighting { background-color: brown; color: white;}
+.normal { background-color: lightgray; color: black;}
+.fire { background-color: red; color: white;}
+.water { background-color: blue; color: white;}
+.grass { background-color: green; color: white;}
+.electric { background-color: yellow; color: black;}
+.ice { background-color: skyblue; color: white;}
+.bug { background-color: rgb(112, 163, 45); color: white;}
+.ground { background-color: tan; color: white;}
+.steel { background-color: grey; color: white;}
+.dark { background-color: #0f0f0f; color: white;}
+.poison { background-color: blueviolet; color: white;}
+.rock { background-color: #af9748; color: white;}
+.ghost { background-color: rgb(37, 0, 78); color: white;}
+.flying { background: rgb(73, 131, 165); color: white;}
+.psychic { background-color: rgb(238, 122, 142); color: white;}
+.fairy { background-color: rgb(255, 150, 224); color: white;}
+.dragon { background-color: rgb(43, 0, 145); color: white;}
+
+
+</style>
