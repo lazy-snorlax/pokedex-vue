@@ -58,6 +58,34 @@ export const useSearchStore = defineStore('search', {
                 this.pokemon = response.data
                 this.cache[name] = response.data
             }
+
+            // Fetch move details for each move in the pokemonData.moves array
+            let movePromises = this.pokemon.moves.map((moveData) => {
+                // Fetch detailed move data
+                return axios.get(moveData.move.url)
+                    .then(moveResponse => {
+                        const moveDetails = moveResponse?.data
+
+                        // Extract relevant move details
+                        return {
+                            version_group_details: moveData.version_group_details,
+                            move: moveData.move,
+                            power: moveDetails.power || null,
+                            accuracy: moveDetails.accuracy || null,
+                            pp: moveDetails.pp,
+                            type: moveDetails.type || null,
+                            damage_class: moveDetails.damage_class.name,
+                            flavor_text: moveDetails.flavor_text_entries,
+                            effect_entries: moveDetails.effect_entries,
+                        }
+                    })
+            })
+
+            // Wait for all move details to be fetched and processed
+            const detailedMoves = await Promise.all(movePromises)
+
+            // Add detailed moves to pokemonData object
+            this.pokemon.moves = detailedMoves;
         }
     }
 })
@@ -159,3 +187,4 @@ export type PokemonResource = {
         }
     }>
 }
+
