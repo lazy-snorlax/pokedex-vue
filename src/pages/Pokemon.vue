@@ -110,7 +110,7 @@
                                 <template v-for="(moves, methodName) in methodGroups">
                                     <input type="radio" :name="`move_learn_method_tabs_${ versionGroupName }`" class="tab" :aria-label="sanitize(methodName)" :checked="methodName === 'level-up' ?? 'checked'">
                                     <div class="tab-content">
-                                        <table class="table">
+                                        <table class="table table-pin-cols">
                                             <thead>
                                                 <tr>
                                                     <th>Move</th>
@@ -120,7 +120,7 @@
                                                     <th>Damage</th>
                                                     <th>Learned At</th>
                                                     <th>Description</th>
-                                                    <th>Effect</th>
+                                                    <th class="w-1/2">Effect</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
