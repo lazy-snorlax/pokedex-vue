@@ -114,15 +114,27 @@
                                             <thead>
                                                 <tr>
                                                     <th>Move</th>
+                                                    <th>Type</th>
+                                                    <th>Power</th>
+                                                    <th>Accuracy</th>
+                                                    <th>Damage</th>
                                                     <th>Learned At</th>
+                                                    <th>Description</th>
+                                                    <th>Effect</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 <tr v-for="(move, index) in moves" :key="index">
                                                     <td>{{ sanitize(move.move) }}</td>
+                                                    <td>{{ sanitize(move.type?.name) }}</td>
+                                                    <td>{{ move.power ?? '-' }}</td>
+                                                    <td>{{ move.accuracy ?? '-' }}</td>
+                                                    <td>{{ sanitize(move.damage_class) }}</td>
                                                     <td>
                                                         {{ methodName === 'level-up' ? move.level_learned_at : '' }}
                                                     </td>
+                                                    <td>{{ move.flavor_text ?? '-' }}</td>
+                                                    <td>{{ move.effect ?? '-' }}</td>
                                                 </tr>
                                             </tbody>
                                         </table>
@@ -191,11 +203,19 @@ const groupedMoves = computed(() => {
                 group[versionGroupName][methodName] = [];
             }
 
+            // console.log(">>> Version: ", versionGroupName, currentMove, currentMove.flavor_text.filter((flavor) => flavor.version_group.name === versionGroupName && flavor.language.name === "en").pop())
+
             // Add the move with details
             group[versionGroupName][methodName].push({
                 move: currentMove.move.name,
-                url: currentMove.move.url,
+                power: currentMove.power,
+                accuracy: currentMove.accuracy,
+                pp: currentMove.pp,
+                type: currentMove.type,
+                damage_class: currentMove.damage_class,
                 level_learned_at: detail.level_learned_at,
+                flavor_text: (currentMove.flavor_text?.filter((flavor) => flavor.version_group.name === versionGroupName && flavor.language.name === "en").pop())?.flavor_text,
+                effect: (currentMove.effect_entries?.filter((effect) => effect.language.name === "en").pop())?.effect
             });
         });
     
