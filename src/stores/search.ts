@@ -1,5 +1,9 @@
 import axios from "axios";
 import { defineStore } from "pinia";
+import pLimit from "p-limit";
+import { saveMoveToDb, getMoveFromDb } from '../idb.ts';
+
+const limit = pLimit(5)
 
 export const useSearchStore = defineStore('search', {
     state: (): SearchState => ({
@@ -64,17 +68,18 @@ export const useSearchStore = defineStore('search', {
             }
             
             // Fetch move details for each move in the pokemonData.moves array
-            let movePromises = this.pokemon.moves.map(async (moveData) => {
+            let movePromises = this.pokemon.moves.map((moveData) => limit(async () => {
                 const moveName = moveData.move.name;
                 
-                // Check if move details are already in the cache
-                let moveDetails = this.cache.moves[moveName];
+                // Check if move details are already in the IndexedDB cache
+                let moveDetails = await getMoveFromDb(moveName);
                 if (!moveDetails) {
                     // Fetch from API if not in cache
                     const moveResponse = await axios.get(moveData.move.url);
                     moveDetails = moveResponse?.data;
+
                     // Store in cache
-                    this.cache.moves[moveName] = moveDetails;
+                    await saveMoveToDb(moveName, moveDetails)
                 }
 
                 // Extract relevant move details
@@ -89,7 +94,7 @@ export const useSearchStore = defineStore('search', {
                     flavor_text: moveDetails.flavor_text_entries,
                     effect_entries: moveDetails.effect_entries,
                 }
-            })
+            }))
 
             // Wait for all move details to be fetched and processed
             const detailedMoves = await Promise.all(movePromises)
