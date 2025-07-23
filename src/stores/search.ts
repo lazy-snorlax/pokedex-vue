@@ -5,7 +5,10 @@ export const useSearchStore = defineStore('search', {
     state: (): SearchState => ({
         basicList: [],
         advList: [],
-        cache: {},
+        cache: {
+            pokemon: {},
+            moves: {},
+        },
         pokemon: {
             name: "",
             url: "",
@@ -29,10 +32,10 @@ export const useSearchStore = defineStore('search', {
             
             filtered.forEach(result => {
                 // Only pull pokemon not in cache
-                if (this.cache[result.name] === undefined) {
+                if (this.cache.pokemon[result.name] === undefined) {
                     promises.push(axios.get(result.url))
                 } else {
-                    this.advList.push(this.cache[result.name])
+                    this.advList.push(this.cache.pokemon[result.name])
                 }
             })
             // Pull only pokemon not already in cache
@@ -42,43 +45,50 @@ export const useSearchStore = defineStore('search', {
                     // Add to advList & cache
                     respArr.forEach(resp => {
                         console.log(">>> resp: ", resp?.data.name)
-                        this.cache[resp?.data.name] = resp?.data
-                        this.advList.push(this.cache[resp?.data.name])
+                        this.cache.pokemon[resp?.data.name] = resp?.data
+                        this.advList.push(this.cache.pokemon[resp?.data.name])
                     })
                     console.log(">>> Cache: ", this.cache)
+                    console.log(">>> AdvList: ", this.advList)
                 })
             }
         },
 
         async getPokemon(name: string) {
-            if (this.cache[name] !== undefined) {
-                this.pokemon = this.cache[name]
+            if (this.cache.pokemon[name] !== undefined) {
+                this.pokemon = this.cache.pokemon[name]
             } else {
                 const response = await axios.get("https://pokeapi.co/api/v2/pokemon/"+name)
                 this.pokemon = response.data
-                this.cache[name] = response.data
+                this.cache.pokemon[name] = response.data
             }
-
+            
             // Fetch move details for each move in the pokemonData.moves array
-            let movePromises = this.pokemon.moves.map((moveData) => {
-                // Fetch detailed move data
-                return axios.get(moveData.move.url)
-                    .then(moveResponse => {
-                        const moveDetails = moveResponse?.data
+            let movePromises = this.pokemon.moves.map(async (moveData) => {
+                const moveName = moveData.move.name;
+                
+                // Check if move details are already in the cache
+                let moveDetails = this.cache.moves[moveName];
+                if (!moveDetails) {
+                    // Fetch from API if not in cache
+                    const moveResponse = await axios.get(moveData.move.url);
+                    moveDetails = moveResponse?.data;
+                    // Store in cache
+                    this.cache.moves[moveName] = moveDetails;
+                }
 
-                        // Extract relevant move details
-                        return {
-                            version_group_details: moveData.version_group_details,
-                            move: moveData.move,
-                            power: moveDetails.power || null,
-                            accuracy: moveDetails.accuracy || null,
-                            pp: moveDetails.pp,
-                            type: moveDetails.type || null,
-                            damage_class: moveDetails.damage_class.name,
-                            flavor_text: moveDetails.flavor_text_entries,
-                            effect_entries: moveDetails.effect_entries,
-                        }
-                    })
+                // Extract relevant move details
+                return {
+                    version_group_details: moveData.version_group_details,
+                    move: moveData.move,
+                    power: moveDetails.power || null,
+                    accuracy: moveDetails.accuracy || null,
+                    pp: moveDetails.pp,
+                    type: moveDetails.type || null,
+                    damage_class: moveDetails.damage_class.name,
+                    flavor_text: moveDetails.flavor_text_entries,
+                    effect_entries: moveDetails.effect_entries,
+                }
             })
 
             // Wait for all move details to be fetched and processed
@@ -94,7 +104,8 @@ type SearchState = {
     basicList: Array<PokemonListResource>,
     advList: Array<PokemonResource>,
     cache: {
-        [key: string]: PokemonResource
+        pokemon: Record<string, PokemonResource[]>,
+        moves: Record<string, any[]>,
     },
     pokemon: PokemonResource
 }
