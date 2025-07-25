@@ -2,6 +2,7 @@ import { openDB } from 'idb';
 
 const dbName = 'pokeCache';
 const storeName = 'moves';
+const EXPIRY_TIME = 5 * 60 * 1000;
 
 // Open the IndexedDB and create the store
 async function openDb() {
@@ -15,16 +16,43 @@ async function openDb() {
   });
 }
 
-// Save a move to IndexedDB
-async function saveMoveToDb(moveName: string, moveDetails: any) {
+// Save to pokeCache
+async function saveToDb(name: string, data: any) {
   const db = await openDb();
-  await db.put(storeName, { name: moveName, details: moveDetails });
+  await db.put(storeName, { 
+    name: name, 
+    details: data, 
+    timestamp: Date.now() 
+  });
 }
 
-// Get a move from IndexedDB
-async function getMoveFromDb(moveName: string) {
+// Check if item is expired
+function isExpired(timestamp: number): boolean {
+  return Date.now() - timestamp > EXPIRY_TIME
+}
+
+// Get and validate expiration
+async function getFromDbWithExpiryCheck(name: string) {
   const db = await openDb();
-  const move = await db.get(storeName, moveName);
+  const record = await db.get(storeName, name);
+
+  if (!record) return null;
+  if (isExpired(record.timestamp)) {
+    await db.delete(storeName, name); // clean up expired item
+    return null;
+  }
+  return record;
+}
+
+// Get a pokemon from pokeCache
+async function getPokemonFromDb(name: string) {
+  const pokemon = await getFromDbWithExpiryCheck(name);
+  return pokemon ? pokemon.details : null;
+}
+
+// Get a move from pokeCache
+async function getMoveFromDb(moveName: string) {
+  const move = await getFromDbWithExpiryCheck(moveName);
   return move ? move.details : null;
 }
 
@@ -34,4 +62,4 @@ async function clearMovesCache() {
   await db.clear(storeName);
 }
 
-export { saveMoveToDb, getMoveFromDb, clearMovesCache };
+export { saveToDb, getPokemonFromDb, getMoveFromDb, clearMovesCache };
