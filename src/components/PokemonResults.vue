@@ -7,26 +7,9 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue';
-import type { PokemonListResource } from '../stores/search';
 import PokemonResult from './PokemonResult.vue';
-
 import { useSearchStore } from '../stores/search';
 import { storeToRefs } from 'pinia';
 
 const { advList } = storeToRefs(useSearchStore())
-const { getPokeData } = useSearchStore()
-
-const props = defineProps<{
-    list?: Array<PokemonListResource> | null
-}>()
-
-onMounted(() => {
-    getPokemon(props.list)
-})
-
-const getPokemon = async (list: Array<PokemonListResource>) => {
-    await getPokeData(list)
-}
-
 </script>
