@@ -10,4 +10,12 @@
 
 <script lang="ts" setup>
 window.document.title = import.meta.env.VITE_APP_TITLE
+
+import { onMounted } from 'vue';
+import { useSearchStore } from './stores/search';
+
+const store = useSearchStore()
+
+onMounted(() => { store.getAllPokemon() })
+
 </script>
