@@ -13,7 +13,7 @@ const props = defineProps<{
     pokemon?: PokemonResource | null
 }>()
 
-const capitalized = (name: string) => {
+const capitalized = (name: string = '') => {
     if (name.includes("mega") || name.includes("gmax")) {
         let words = name.split("-")
         let newWord = ""
