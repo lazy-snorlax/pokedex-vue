@@ -2,7 +2,10 @@
     <div class="hero bg-base-200 max-h-screen sticky top-0 z-40">
         <div class="hero-content text-center">
             <div class="max-w-full">
-                <h1 class="text-5xl font-bold">{{ capitalized(pokemon?.name) }}</h1>
+                <h1 class="text-5xl font-bold">
+                    {{ capitalized(pokemon?.species?.name) }} 
+                    <span v-if="pokemon?.name.includes('-')">({{ pokemon?.name.split('-')[1].toUpperCase() }})</span>
+                </h1>
                 <RouterLink  :to="'/'" class="btn btn-primary">Back to Search</RouterLink>
             </div>
         </div>
@@ -44,6 +47,7 @@
                     <h3 class="text-lg">{{ sanitize(ability.ability.name) }}
                         <span class="badge" v-if="ability.is_hidden">Hidden Ability</span>
                     </h3>
+                    <p>{{ ability.ability.flavor_text?.filter((text: any) => text.language.name === "en").pop().flavor_text }}</p>
                 </template>
             </div>
         </div>
@@ -166,7 +170,7 @@ onMounted(async () => {
     await getPokemon(route.params.pokemon)
 })
 
-const capitalized = (name: string) => {
+const capitalized = (name: string = "") => {
     if (name.includes("mega") || name.includes("gmax")) {
         return sanitize(name)
     } else {
