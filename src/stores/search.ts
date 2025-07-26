@@ -1,7 +1,12 @@
 import axios from "axios";
 import { defineStore } from "pinia";
 import pLimit from "p-limit";
-import { saveToDb, getPokemonFromDb, getMoveFromDb } from '../idb.ts';
+import { 
+    saveToDb, 
+    getPokemonFromDb, 
+    getMoveFromDb,
+    getAbilityFromDb, 
+} from '../idb.ts';
 
 const limit = pLimit(10)
 
@@ -50,7 +55,7 @@ export const useSearchStore = defineStore('search', {
                     // Fetch and cache
                     promises.push(
                         axios.get(result.url).then(async (resp) => {
-                            await saveToDb(resp.data.name, resp.data)
+                            await saveToDb('pokemon', resp.data.name, resp.data)
                             return resp.data
                         })
                     )
@@ -70,11 +75,30 @@ export const useSearchStore = defineStore('search', {
             } else {
                 const response = await axios.get("https://pokeapi.co/api/v2/pokemon/"+name)
                 this.pokemon = response.data
-                saveToDb(name, response.data)
+                saveToDb('pokemon', name, response.data)
             }
+
+            const abilityPromises = this.pokemon.abilities.map((ability: any) => limit(async () => {
+                const abilityName = ability.ability.name
+                let abilityDetails = await getAbilityFromDb(abilityName);
+                if (!abilityDetails) {
+                    const abilityResponse = await axios.get(ability.ability.url)
+                    abilityDetails = abilityResponse?.data
+                    await saveToDb('abilities', abilityName, abilityDetails)
+                }
+                return {
+                    ability: {
+                        name: abilityDetails.name,
+                        flavor_text: abilityDetails.flavor_text_entries,
+                    },
+                    is_hidden: ability.is_hidden
+                }
+            }))
+            const detailedAbilites = await Promise.all(abilityPromises)
+            this.pokemon.abilities = detailedAbilites
             
             // Fetch move details for each move in the pokemonData.moves array
-            let movePromises = this.pokemon.moves.map((moveData) => limit(async () => {
+            const movePromises = this.pokemon.moves.map((moveData) => limit(async () => {
                 const moveName = moveData.move.name;
                 
                 // Check if move details are already in the IndexedDB cache
@@ -85,7 +109,7 @@ export const useSearchStore = defineStore('search', {
                     moveDetails = moveResponse?.data;
 
                     // Store in cache
-                    await saveToDb(moveName, moveDetails)
+                    await saveToDb('moves', moveName, moveDetails)
                 }
 
                 // Extract relevant move details
