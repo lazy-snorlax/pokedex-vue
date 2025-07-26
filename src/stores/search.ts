@@ -3,11 +3,15 @@ import { defineStore } from "pinia";
 import pLimit from "p-limit";
 import { saveToDb, getPokemonFromDb, getMoveFromDb } from '../idb.ts';
 
-const limit = pLimit(5)
+const limit = pLimit(10)
 
 export const useSearchStore = defineStore('search', {
     state: (): SearchState => ({
-        basicList: [],
+        searchTerm: '',
+        pokeList: [],
+        filteredList: [],
+        promises: [],
+
         advList: [],
         pokemon: {
             name: "",
@@ -18,39 +22,45 @@ export const useSearchStore = defineStore('search', {
             }
         }
     }),
-    actions: {
+    actions: {        
+        async searchPokemon(partial: string) {
+            // console.log(">>>> Searching: ", partial)
+            if (partial.length >= 3) {
+                this.filteredList = this.pokeList.filter((pokemon) => {
+                    return pokemon.name.includes(partial.toLowerCase())
+                })
+            }
+        },
+
         async getAllPokemon() {
             await axios.get("https://pokeapi.co/api/v2/pokemon/?limit=10500")
             .then(response => {
-                this.basicList = response.data.results
+                this.pokeList = response.data.results
             })
         },
-
+        
         async getPokeData(filtered: Array<PokemonListResource>) {
+            console.log(">>>> Fetching PokeData: ", filtered)
             this.advList = []; // Reset advList to blank
             let promises = []; // Init empty promise array
             
-            filtered.forEach(async (result) => {
-                promises.push(axios.get(result.url))
-                // Only pull pokemon not in cache
-                // let pokemon = await getPokemonFromDb(result.name);
-                // console.log(">>>> getPokeData 2: ", pokemon)
-                // if (pokemon != null) {
-                // } else {
-                //     this.advList.push(pokemon)
-                // }
-            })
-            
-            // Pull only pokemon not already in cache
-            if (promises.length > 0) {
-                Promise.all(promises).then(response => {
-                    let respArr = response
-                    respArr.forEach(async (resp) => {
-                        await saveToDb(resp?.data.name, resp.data)
-                        this.advList.push(resp?.data)
-                    })
-                })
+            for (const result of filtered) {
+                const pokemon = await getPokemonFromDb(result.name)
+                if (pokemon == null) {
+                    // Fetch and cache
+                    promises.push(
+                        axios.get(result.url).then(async (resp) => {
+                            await saveToDb(resp.data.name, resp.data)
+                            return resp.data
+                        })
+                    )
+                } else {
+                    this.advList.push(pokemon)
+                }
             }
+            
+            const fetchedPokemon = await Promise.all(promises)
+            this.advList.push(...fetchedPokemon)
         },
 
         async getPokemon(name: string) {
@@ -102,12 +112,11 @@ export const useSearchStore = defineStore('search', {
 })
 
 type SearchState = {
-    basicList: Array<PokemonListResource>,
+    searchTerm: string,
+    pokeList: Array<PokemonListResource>,
+    filteredList: Array<PokemonListResource>,
+
     advList: Array<PokemonResource>,
-    // cache: {
-    //     pokemon: Record<string, PokemonResource[]>,
-    //     moves: Record<string, any[]>,
-    // },
     pokemon: PokemonResource
 }
 
