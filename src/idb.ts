@@ -10,13 +10,13 @@ async function openDb() {
     upgrade(db) {
       if (!db.objectStoreNames.contains(storeName)) {
         const store = db.createObjectStore(storeName, { keyPath: 'name' });
-        store.createIndex('by_name', 'name'); // Index for fast lookup by move name
+        store.createIndex('by_name', 'name'); // Index for fast lookup by name
       }
     },
   });
 }
 
-// Save to pokeCache
+// Save to pokeCache.moves
 async function saveToDb(name: string, data: any) {
   const db = await openDb();
   await db.put(storeName, { 
@@ -36,7 +36,10 @@ async function getFromDbWithExpiryCheck(name: string) {
   const db = await openDb();
   const record = await db.get(storeName, name);
 
-  if (!record) return null;
+  if (!record || record == undefined) {
+    return null;
+  }
+  
   if (isExpired(record.timestamp)) {
     await db.delete(storeName, name); // clean up expired item
     return null;
