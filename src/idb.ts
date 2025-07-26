@@ -1,23 +1,29 @@
 import { openDB } from 'idb';
 
 const dbName = 'pokeCache';
-const storeName = 'moves';
+const storeNames = [
+  'pokemon',
+  'moves',
+  'abilities'
+];
 const EXPIRY_TIME = 5 * 60 * 1000;
 
 // Open the IndexedDB and create the store
 async function openDb() {
   return openDB(dbName, 1, {
     upgrade(db) {
-      if (!db.objectStoreNames.contains(storeName)) {
-        const store = db.createObjectStore(storeName, { keyPath: 'name' });
-        store.createIndex('by_name', 'name'); // Index for fast lookup by name
+      for (const storeName of storeNames) {
+        if (!db.objectStoreNames.contains(storeName)) {
+          const store = db.createObjectStore(storeName, { keyPath: 'name' });
+          store.createIndex('by_name', 'name'); // Index for fast lookup by name
+        }
       }
     },
   });
 }
 
 // Save to pokeCache.moves
-async function saveToDb(name: string, data: any) {
+async function saveToDb(storeName: string, name: string, data: any) {
   const db = await openDb();
   await db.put(storeName, { 
     name: name, 
@@ -32,7 +38,7 @@ function isExpired(timestamp: number): boolean {
 }
 
 // Get and validate expiration
-async function getFromDbWithExpiryCheck(name: string) {
+async function getFromDbWithExpiryCheck(storeName: string, name: string) {
   const db = await openDb();
   const record = await db.get(storeName, name);
 
@@ -49,20 +55,28 @@ async function getFromDbWithExpiryCheck(name: string) {
 
 // Get a pokemon from pokeCache
 async function getPokemonFromDb(name: string) {
-  const pokemon = await getFromDbWithExpiryCheck(name);
+  const pokemon = await getFromDbWithExpiryCheck('pokemon', name);
   return pokemon ? pokemon.details : null;
 }
 
 // Get a move from pokeCache
-async function getMoveFromDb(moveName: string) {
-  const move = await getFromDbWithExpiryCheck(moveName);
+async function getMoveFromDb(name: string) {
+  const move = await getFromDbWithExpiryCheck('moves', name);
   return move ? move.details : null;
 }
 
-// Clear the entire store (useful for clearing cache)
-async function clearMovesCache() {
-  const db = await openDb();
-  await db.clear(storeName);
+// Get an ability from pokeCache
+async function getAbilityFromDb(name: string) {
+  const ability = await getFromDbWithExpiryCheck('abilities', name);
+  return ability ? ability.details : null;
 }
 
-export { saveToDb, getPokemonFromDb, getMoveFromDb, clearMovesCache };
+// Clear the entire store (useful for clearing cache)
+async function clearCache() {
+  const db = await openDb();
+  for (const storeName of storeNames) {
+    await db.clear(storeName);
+  }
+}
+
+export { saveToDb, getPokemonFromDb, getMoveFromDb, getAbilityFromDb, clearCache };
