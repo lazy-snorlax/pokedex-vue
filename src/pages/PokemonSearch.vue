@@ -9,7 +9,7 @@
         <div class="rounded-box grid h-20 place-items-center">
           <div class="form-control">
             <div class="relative">
-              <input type="text" class="w-full pr-40 bg-gray-200 input input-lg text-black" placeholder="Search..." v-model="searchStr" @change="search" />
+              <input type="text" class="w-full pr-40 bg-gray-200 input input-lg text-black" placeholder="Search..." v-model="searchInput" @change="search" />
               <button type="button" class="absolute top-0 right-0 rounded-l-none w-36 btn btn-primary btn-lg">Search</button>
             </div>
           </div>
@@ -18,40 +18,22 @@
     </div>
   </div>
   <div class="container mx-auto max-h-full mt-4">
-    <PokemonResults :list="pokeList" v-if="pokeList.length > 0" :key="pokeList.length * Math.floor(Math.random()*10)" />
+    <PokemonResults :list="store.filteredList" v-if="store.filteredList.length > 0" :key="store.filteredList.length * Math.floor(Math.random()*10)" />
   </div>
 </template>
   
 <script setup lang="ts">
-import { storeToRefs } from 'pinia';
+import { ref, watch, watchEffect } from 'vue';
 import PokemonResults from '../components/PokemonResults.vue';
+import { useSearchStore } from '../stores/search';
 
-import { useSearchStore, type PokemonListResource } from '../stores/search';
-import { onMounted, ref } from 'vue';
-const { getAllPokemon } = useSearchStore()
+const store = useSearchStore()
+const searchInput = ref("")
 
-const { basicList } = storeToRefs(useSearchStore())
-
-const searchStr = ref("")  
-const pokeList = ref<PokemonListResource[]>([])
-
-onMounted(() => {
-  getPokemon()
+const search = (async () => {
+  await store.searchPokemon(searchInput.value)
+  await store.getPokeData(store.filteredList)
 })
-
-const getPokemon = async () => {
-  await getAllPokemon()
-}
-
-const search = () => {
-  if (searchStr.value.length >= 3) {
-    let filtered = basicList.value.filter((pokemon) => {
-      return pokemon.name.includes(searchStr.value.toLowerCase())
-    })
-    pokeList.value = filtered
-  }
-  console.log(">>>> pokeList: ", pokeList.value)
-}
 
 </script>
   
