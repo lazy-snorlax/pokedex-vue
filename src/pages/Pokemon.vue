@@ -26,7 +26,7 @@
             </div>
         </div>
         <div class="card bg-base-300 rounded-box grid grow place-items-center mb-3">
-            <h1 class="card-title text-3xl">Stats</h1>
+            <h1 class="card-title text-3xl">Base Stats</h1>
             <div class="card-body">
                 <template v-for="stat in pokemon.stats">
                     <p>
@@ -50,6 +50,15 @@
                     <p>{{ ability.ability.flavor_text?.filter((text: any) => text.language.name === "en").pop().flavor_text }}</p>
                 </template>
             </div>
+        </div>
+
+        <div class="card bg-base-300 rounded-box grid grow place-items-center mb-3 pt-3">
+            <h3 class="card-title">Evolution Chain</h3>
+            <ul>
+                <template v-for="evo in pokemon.evolutionChain" :key="evo.species">
+                    <EvolutionStage :stage="evo" />
+                </template>
+            </ul>
         </div>
 
         <!-- Sprites -->
@@ -114,31 +123,31 @@
                                 <template v-for="(moves, methodName) in methodGroups">
                                     <input type="radio" :name="`move_learn_method_tabs_${ versionGroupName }`" class="tab" :aria-label="sanitize(methodName)" :checked="methodName === 'level-up' ?? 'checked'">
                                     <div class="tab-content">
-                                        <table class="table table-pin-cols">
+                                        <table class="table table-fixed table-pin-cols">
                                             <thead>
-                                                <tr>
-                                                    <th>Move</th>
-                                                    <th>Type</th>
-                                                    <th>Power</th>
-                                                    <th>Accuracy</th>
-                                                    <th>Damage</th>
-                                                    <th>Learned At</th>
-                                                    <th>Description</th>
-                                                    <th class="w-1/2">Effect</th>
+                                                <tr class="h-1/2">
+                                                    <th class="w-1/10">Move</th>
+                                                    <th class="w-1/10">Type</th>
+                                                    <th class="w-1/10">Power</th>
+                                                    <th class="w-1/10">Accuracy</th>
+                                                    <th class="w-1/10">Damage</th>
+                                                    <th class="w-1/10">Learned At</th>
+                                                    <th >Effect</th>
+                                                    <th >Description</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 <tr v-for="(move, index) in moves" :key="index">
-                                                    <td>{{ sanitize(move.move) }}</td>
+                                                    <td class="text-center">{{ sanitize(move.move) }}</td>
                                                     <td :class="move.type?.name" class="text-center">{{ sanitize(move.type?.name) }}</td>
-                                                    <td>{{ move.power ?? '-' }}</td>
-                                                    <td>{{ move.accuracy ?? '-' }}</td>
+                                                    <td class="text-center">{{ move.power ?? '-' }}</td>
+                                                    <td class="text-center">{{ move.accuracy ?? '-' }}</td>
                                                     <td :class="move.damage_class != 'status' ? move.damage_class : 'status-type'">{{ sanitize(move.damage_class) }}</td>
-                                                    <td>
+                                                    <td class="text-center">
                                                         {{ methodName === 'level-up' ? move.level_learned_at : '' }}
                                                     </td>
-                                                    <td>{{ move.flavor_text ?? '-' }}</td>
                                                     <td class="overflow-x-auto">{{ move.effect ?? '-' }}</td>
+                                                    <td>{{ move.flavor_text ?? '-' }}</td>
                                                 </tr>
                                             </tbody>
                                         </table>
@@ -160,14 +169,18 @@ import { computed, onBeforeMount, onMounted } from 'vue';
 import { useSearchStore } from '../stores/search';
 import { storeToRefs } from 'pinia';
 import { useRoute } from 'vue-router';
+import EvolutionStage from '../components/EvolutionStage.vue';
 
 const route = useRoute()
 
 const { pokemon } = storeToRefs(useSearchStore())
-const { getPokemon } = useSearchStore()
+const store = useSearchStore()
 
 onMounted(async () => {
-    await getPokemon(route.params.pokemon)
+    await store.getPokemon(route.params.pokemon)
+    await store.getAbilities()
+    await store.getMoves()
+    await store.getEvoChain()
 })
 
 const capitalized = (name: string = "") => {
