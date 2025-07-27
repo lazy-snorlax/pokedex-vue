@@ -77,7 +77,10 @@ export const useSearchStore = defineStore('search', {
                 this.pokemon = response.data
                 saveToDb('pokemon', name, response.data)
             }
+        },
 
+        async getAbilities() {
+            // Get pokemon abilities from cache. If not in cache pull from api, cache them, and push to pokemon object
             const abilityPromises = this.pokemon.abilities.map((ability: any) => limit(async () => {
                 const abilityName = ability.ability.name
                 let abilityDetails = await getAbilityFromDb(abilityName);
@@ -96,22 +99,21 @@ export const useSearchStore = defineStore('search', {
             }))
             const detailedAbilites = await Promise.all(abilityPromises)
             this.pokemon.abilities = detailedAbilites
-            
+        },
+
+        async getMoves() {
             // Fetch move details for each move in the pokemonData.moves array
             const movePromises = this.pokemon.moves.map((moveData) => limit(async () => {
                 const moveName = moveData.move.name;
-                
                 // Check if move details are already in the IndexedDB cache
                 let moveDetails = await getMoveFromDb(moveName);
                 if (!moveDetails) {
                     // Fetch from API if not in cache
                     const moveResponse = await axios.get(moveData.move.url);
                     moveDetails = moveResponse?.data;
-
                     // Store in cache
                     await saveToDb('moves', moveName, moveDetails)
                 }
-
                 // Extract relevant move details
                 return {
                     version_group_details: moveData.version_group_details,
@@ -125,12 +127,68 @@ export const useSearchStore = defineStore('search', {
                     effect_entries: moveDetails.effect_entries,
                 }
             }))
-
             // Wait for all move details to be fetched and processed
             const detailedMoves = await Promise.all(movePromises)
-
             // Add detailed moves to pokemonData object
             this.pokemon.moves = detailedMoves;
+        },
+
+        async getEvoChain() {
+            // Get Pokemon evolution chain
+            const speciesRes = await axios.get(this.pokemon.species.url)
+            const evoChainUrl = speciesRes.data.evolution_chain.url
+            const { data: evoData } = await axios.get(evoChainUrl)
+
+            const evoTree = await this.parseEvolutionChain(evoData.chain)
+            this.pokemon.evolutionChain = [evoTree]
+        },
+
+        async parseEvolutionChain(chainNode: any): Promise<EvolutionStage> {
+            const name = chainNode.species.name;
+            let poke = await getPokemonFromDb(name);
+            if (!poke) {
+                poke = await axios.get("https://pokeapi.co/api/v2/pokemon/"+name).then(r => r.data);
+                await saveToDb('pokemon', name, poke.data)
+            }
+            const sprite = poke.sprites.front_default;
+
+            const details = chainNode.evolution_details?.[0];
+            const evolutionInfo = this.formatEvolutionDetails(details);
+
+            const forms = await Promise.all(
+                poke.forms.map(async (f: any) => {
+                const formData = await axios.get(f.url).then(r => r.data);
+                return {
+                    formName: formData.form_name,
+                    sprite: formData.sprites.front_default!,
+                    isMega: formData.is_mega,
+                    isGMax: formData.form_name === 'gmax' || formData.is_battle_only && formData.form_name?.includes('gmax'),
+                };
+                })
+            );
+
+            const evolvesTo = await Promise.all(chainNode.evolves_to.map((c: any) => this.parseEvolutionChain(c)));
+            return { species: name, sprite, evolutionInfo, evolvesTo, forms };
+        },
+
+        formatEvolutionDetails(details: any): string {
+            if (!details) return 'Base species';
+            const parts: string[] = [];
+            if (details.trigger?.name) parts.push(`Trigger: ${details.trigger.name}`);
+            if (details.min_level != null) parts.push(`Level ≥ ${details.min_level}`);
+            if (details.item?.name) parts.push(`Use: ${details.item.name}`);
+            if (details.held_item?.name) parts.push(`Hold: ${details.held_item.name}`);
+            if (details.known_move?.name) parts.push(`Knows move: ${details.known_move.name}`);
+            if (details.known_move_type?.name) parts.push(`Knows move of type: ${details.known_move_type.name}`);
+            if (details.location?.name) parts.push(`Location: ${details.location.name}`);
+            if (details.gender != null) parts.push(`Must be gender: ${details.gender === 1 ? 'female' : 'male'}`);
+            if (details.min_happiness != null) parts.push(`Happiness ≥ ${details.min_happiness}`);
+            if (details.min_affection != null) parts.push(`Affection ≥ ${details.min_affection}`);
+            if (details.time_of_day) parts.push(`Time: ${details.time_of_day}`);
+            if (details.party_species?.name) parts.push(`In party with: ${details.party_species.name}`);
+            if (details.party_type?.name) parts.push(`In party with type: ${details.party_type.name}`);
+            if (details.needs_overworld_rain) parts.push(`While raining`);
+            return parts.join(', ');
         }
     }
 })
@@ -142,6 +200,19 @@ type SearchState = {
 
     advList: Array<PokemonResource>,
     pokemon: PokemonResource
+}
+
+interface EvolutionStage {
+  species: string
+  sprite: string
+  evolutionInfo: string
+  evolvesTo: EvolutionStage[]
+  forms?: {
+    formName: string
+    sprite: string
+    isMega?: boolean
+    isGMax?: boolean
+  }[]
 }
 
 export type PokemonListResource = {
