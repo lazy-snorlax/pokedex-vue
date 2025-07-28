@@ -1,17 +1,18 @@
 <template>
-  <li>
-    <div style="display: flex; align-items: center; gap: 1rem;">
-      <img :src="stage.sprite" :alt="stage.species" width="80" />
-      <div>
-        <strong>{{ stage.species }}</strong><br />
-        <em>{{ stage.evolutionInfo }}</em>
-      </div>
+  <div class="flex items-center gap-1">
+    <RouterLink :to="{ name: 'pokemon', params: { pokemon: stage.species } }">
+      <img :src="stage.sprite" :alt="stage.species" class="w-30" />
+    </RouterLink>
+    <div>
+      <RouterLink :to="{ name: 'pokemon', params: { pokemon: stage.species } }">
+        <strong>{{ capitalized(stage.species) }}</strong>
+      </RouterLink>
+      <br />
+      <em>{{ stage.evolutionInfo }}</em>
     </div>
+  </div>
 
-    <ul v-if="stage.evolvesTo.length > 0" style="margin-left: 2rem;">
-      <EvolutionStage v-for="child in stage.evolvesTo" :key="child.species" :stage="child" />
-    </ul>
-  </li>
+  <EvolutionStage v-if="stage.evolvesTo.length > 0" v-for="child in stage.evolvesTo" :key="child.species" :stage="child" />
 </template>
 
 <script lang="ts" setup>
@@ -23,4 +24,8 @@ defineProps<{
     evolvesTo: any[]
   }
 }>()
+
+const capitalized = (name: string = "") => {
+  return name.charAt(0).toUpperCase() + name.slice(1)
+}
 </script>

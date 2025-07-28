@@ -58,13 +58,14 @@
                 </div>
             </div>
 
+            <!-- Evolutions -->
             <div class="card bg-base-300 rounded-box grid grow place-items-center mb-3 pt-3">
                 <h3 class="card-title">Evolution Chain</h3>
-                <ul>
+                <div class="grid grid-cols-1 gap-2 mx-5 mb-5">
                     <template v-for="evo in pokemon.evolutionChain" :key="evo.species">
                         <EvolutionStage :stage="evo" />
                     </template>
-                </ul>
+                </div>
             </div>
 
             <!-- Sprites -->
@@ -171,7 +172,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeMount, onMounted } from 'vue';
+import { computed, onMounted, watch } from 'vue';
 import { useSearchStore } from '../stores/search';
 import { storeToRefs } from 'pinia';
 import { useRoute } from 'vue-router';
@@ -182,7 +183,7 @@ const route = useRoute()
 const { pokemon, isLoading } = storeToRefs(useSearchStore())
 const store = useSearchStore()
 
-onMounted(async () => {
+const loadPokemon = async () => {
     isLoading.value = true
     await store.getPokemon(route.params.pokemon)
     await store.getAbilities()
@@ -191,7 +192,13 @@ onMounted(async () => {
     setTimeout(() => {
         isLoading.value = false
     }, 1000)
+}
+
+onMounted(async () => {
+    await loadPokemon()
 })
+
+watch(() => route.params.pokemon, loadPokemon)
 
 const capitalized = (name: string = "") => {
     if (name.includes("mega") || name.includes("gmax")) {
