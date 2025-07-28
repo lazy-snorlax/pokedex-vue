@@ -16,6 +16,7 @@ export const useSearchStore = defineStore('search', {
         pokeList: [],
         filteredList: [],
         promises: [],
+        isLoading: false,
 
         advList: [],
         pokemon: {
@@ -29,7 +30,7 @@ export const useSearchStore = defineStore('search', {
     }),
     actions: {        
         async searchPokemon(partial: string) {
-            // console.log(">>>> Searching: ", partial)
+            console.log(">>>> Searching: ", partial)
             if (partial.length >= 3) {
                 this.filteredList = this.pokeList.filter((pokemon) => {
                     return pokemon.name.includes(partial.toLowerCase())
@@ -197,6 +198,7 @@ type SearchState = {
     searchTerm: string,
     pokeList: Array<PokemonListResource>,
     filteredList: Array<PokemonListResource>,
+    isLoading: boolean,
 
     advList: Array<PokemonResource>,
     pokemon: PokemonResource
