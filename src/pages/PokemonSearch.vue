@@ -18,12 +18,19 @@
     </div>
   </div>
   <div class="container mx-auto max-h-full mt-4">
-    <PokemonResults :list="store.filteredList" v-if="store.filteredList.length > 0" :key="store.filteredList.length * Math.floor(Math.random()*10)" />
+    <template v-if="store.isLoading">
+      <div class="grid place-items-center h-full">
+        <span class="loading loading-spinner loading-xl text-center"></span>
+      </div>
+    </template>
+    <template v-else>
+      <PokemonResults :list="store.filteredList" v-if="store.filteredList.length > 0" :key="store.filteredList.length * Math.floor(Math.random()*10)" />
+    </template>
   </div>
 </template>
   
 <script setup lang="ts">
-import { ref, watch, watchEffect } from 'vue';
+import { ref } from 'vue';
 import PokemonResults from '../components/PokemonResults.vue';
 import { useSearchStore } from '../stores/search';
 
@@ -31,8 +38,12 @@ const store = useSearchStore()
 const searchInput = ref("")
 
 const search = (async () => {
+  store.isLoading = true
   await store.searchPokemon(searchInput.value)
   await store.getPokeData(store.filteredList)
+  setTimeout(() => {
+    store.isLoading = false
+  }, 1000)
 })
 
 </script>
